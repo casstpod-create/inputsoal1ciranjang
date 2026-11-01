@@ -417,6 +417,14 @@ input[type="file"].fi-file {
   text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
 }
 .btn-nilai:hover { border-color: var(--success); color: var(--success); }
+.btn-analisis {
+  padding: 11px 16px; border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border); background: var(--surface);
+  font-size: 13px; font-weight: 700; color: var(--text); cursor: pointer; transition: .15s;
+  white-space: nowrap; font-family: var(--font);
+  text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+}
+.btn-analisis:hover { border-color: var(--warn); color: var(--warn); }
 .btn-clear-local {
   padding: 11px 14px; border-radius: var(--radius-sm);
   border: 1.5px solid var(--border); background: var(--surface);
@@ -600,6 +608,7 @@ input[type="file"].fi-file {
     <div class="bar-actions">
       <a class="btn-cetak" href="https://casstpod-create.github.io/cetaksoal1ciranjang/" target="_blank" rel="noopener noreferrer">🖨 Cetak Soal</a>
       <a class="btn-nilai" href="https://casstpod-create.github.io/CEKNILAIWALAS1CIRANJANG/" target="_blank" rel="noopener noreferrer">📊 Cek Nilai</a>
+      <a class="btn-analisis" href="https://rahestadev2.github.io/analisisbutirsoal1ciranjang/" target="_blank" rel="noopener noreferrer">📈 Analisis Butir Soal</a>
       <button class="btn-preview"     onclick="showPreviewModal()">👁 Preview</button>
       <button class="btn-clear-local" onclick="confirmClearLocal()">🗑 Bersihkan</button>
       <button class="btn-kirim" id="btnKirim" onclick="kirimSemuaData()">Kirim ke Server →</button>
