@@ -322,6 +322,47 @@ input[type="file"].fi-file {
   background: var(--surface); color: var(--text); cursor: pointer;
 }
 
+/* LINK GAMBAR & LAMPIRAN FILE */
+.link-row { display: flex; gap: 6px; margin-top: 8px; }
+.link-row .fi { padding: 8px 10px; font-size: 13px; min-width: 0; }
+.btn-link {
+  padding: 8px 14px; border-radius: var(--radius-xs);
+  border: 1.5px solid var(--accent); background: var(--accent-soft); color: var(--accent);
+  font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap;
+  font-family: var(--font); transition: .15s; flex-shrink: 0;
+}
+.btn-link:hover { background: var(--accent); color: #fff; }
+.btn-link:disabled { opacity: .6; cursor: wait; }
+.btn-del-mini {
+  font-size: 11px; color: var(--danger); background: var(--danger-soft);
+  border: 1px solid var(--danger); border-radius: 6px; padding: 3px 10px;
+  cursor: pointer; font-family: var(--font); font-weight: 700;
+}
+.img-preview-soal { max-width: 100%; max-height: 160px; border-radius: 8px; border: 1px solid var(--border); display: block; }
+.img-src-note { font-size: 11px; color: var(--muted); margin-top: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.img-preview-wrap .btn-del-mini { margin-top: 6px; }
+.lampiran-chip {
+  display: flex; align-items: center; gap: 8px; margin-top: 8px;
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius-xs); padding: 7px 10px; font-size: 13px; font-weight: 600;
+}
+.lampiran-nama { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lampiran-size { color: var(--muted); font-weight: 700; flex-shrink: 0; }
+.opt-link-toggle {
+  width: 32px; height: 32px; border-radius: var(--radius-xs);
+  border: 1.5px solid var(--border); background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; cursor: pointer; flex-shrink: 0; transition: .15s;
+}
+.opt-link-toggle:hover, .opt-link-toggle:active { background: var(--accent-soft); border-color: var(--accent-mid); }
+.opt-link-row { display: none; gap: 6px; margin: 4px 0 4px 38px; }
+.opt-link-row.show { display: flex; }
+.opt-link-row .fi { padding: 7px 10px; font-size: 13px; min-width: 0; }
+.pv-lampiran {
+  display: inline-block; margin-bottom: 10px; padding: 5px 12px; font-size: 12px; font-weight: 700;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 99px;
+}
+
 /* OPTIONS */
 .opsi-wrapper { display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
 .option-row {
@@ -699,6 +740,66 @@ function getCachedB64(inputEl) {
   return (inputEl && inputEl.dataset && inputEl.dataset.b64) ? inputEl.dataset.b64 : '';
 }
 
+/* ===== LINK GAMBAR & LAMPIRAN FILE ===== */
+/* Catatan: dataset.b64 pada input gambar bisa berisi data-URL (hasil upload) ATAU link http(s) */
+var MAX_LAMPIRAN = 3 * 1024 * 1024;   /* 3 MB per lampiran */
+var quotaWarned  = false;
+
+function isDataUrl(s) { return String(s || '').indexOf('data:') === 0; }
+
+function formatUkuran(b) {
+  return b < 1048576 ? Math.max(1, Math.round(b / 1024)) + ' KB' : (b / 1048576).toFixed(1) + ' MB';
+}
+
+/* Link Google Drive (share link) diubah jadi link gambar langsung */
+function normalisasiLink(u) {
+  u = (u || '').trim();
+  var m = u.match(/drive\.google\.com\/file\/d\/([\w-]+)/) ||
+          u.match(/drive\.google\.com\/(?:open|uc)\?(?:[^#]*&)?id=([\w-]+)/);
+  return m ? 'https://lh3.googleusercontent.com/d/' + m[1] : u;
+}
+
+/* Validasi link: harus http(s) dan benar-benar bisa dimuat sebagai gambar */
+function cekLinkGambar(raw, btn, cb) {
+  var url = normalisasiLink(raw);
+  if (!url) { toast('warn', 'Link masih kosong', 'Tempel link gambar terlebih dahulu.'); return; }
+  if (!/^https?:\/\/\S+$/i.test(url)) {
+    toast('error', 'Link tidak valid', 'Link harus diawali http:// atau https://');
+    return;
+  }
+  var oldTxt = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Cek...'; }
+
+  var img = new Image();
+  var selesai = false;
+  var timer;
+  function akhir(ok) {
+    if (selesai) return;
+    selesai = true;
+    clearTimeout(timer);
+    if (btn) { btn.disabled = false; btn.textContent = oldTxt; }
+    if (ok) { cb(url); }
+    else {
+      toast('error', 'Gambar tidak bisa dimuat',
+        'Pastikan link langsung ke file gambar (.jpg/.png/.webp) dan bisa dibuka publik.', 5500);
+    }
+  }
+  timer = setTimeout(function() { akhir(false); }, 10000);
+  img.onload  = function() { akhir(true); };
+  img.onerror = function() { akhir(false); };
+  img.referrerPolicy = 'no-referrer';
+  img.src = url;
+}
+
+function getLampiran(card) {
+  var el = card.querySelector('.fileLampiran');
+  return {
+    data: getCachedB64(el),
+    nama: (el && el.dataset.nama) || '',
+    size: parseInt(el && el.dataset.size) || 0
+  };
+}
+
 /* ===== LOCAL SAVE ===== */
 function setLocalStatus(state, count) {
   var el = document.getElementById('autosaveStatus');
@@ -734,6 +835,7 @@ function collectDraftData() {
       jml        : jml,
       pilihan    : [],
       gambarSoal : getCachedB64(card.querySelector('.fileSoal')),
+      lampiran   : getLampiran(card),
       gambarOpsi : {}
     };
     for (var i = 0; i < jml; i++) {
@@ -764,6 +866,11 @@ function saveToLocal() {
   } catch(e) {
     setLocalStatus('unsaved', 0);
     console.warn('LocalStorage error:', e);
+    if (!quotaWarned) {
+      quotaWarned = true;
+      toast('warn', 'Draft terlalu besar untuk disimpan lokal',
+        'Gambar/file yang diunggah terlalu besar. Kurangi ukurannya atau gunakan link gambar, dan kirim ke server sebelum menutup halaman.', 7000);
+    }
   }
 }
 
@@ -952,15 +1059,29 @@ function buatKartu(nomor, item) {
     '</div>' +
 
     '<div class="file-section">' +
-      '<label>Gambar Soal (opsional)</label>' +
+      '<label>Gambar Soal (opsional) — upload atau link</label>' +
       '<input type="file" class="fi-file fileSoal" accept="image/*"' +
              ' onchange="handleFileSoal(this)">' +
+      '<div class="link-row">' +
+        '<input type="url" class="fi linkSoal" placeholder="atau tempel link gambar (https://...)"' +
+               ' onkeydown="if(event.key===\'Enter\'){event.preventDefault();pasangLinkSoal(this);}">' +
+        '<button type="button" class="btn-link" onclick="pasangLinkSoal(this)">🔗 Pasang</button>' +
+      '</div>' +
       '<div class="img-preview-wrap" style="display:none;margin-top:8px">' +
-        '<img class="img-preview-soal" style="max-width:100%;max-height:160px;border-radius:8px;border:1px solid var(--border);display:block">' +
-        '<button type="button" onclick="hapusGambarSoal(this)"' +
-          ' style="margin-top:5px;font-size:11px;color:var(--danger);background:var(--danger-soft);border:1px solid var(--danger);border-radius:6px;padding:3px 10px;cursor:pointer;font-family:var(--font);font-weight:700">' +
-          '✕ Hapus Gambar' +
-        '</button>' +
+        '<img class="img-preview-soal" alt="Pratinjau gambar soal">' +
+        '<div class="img-src-note" style="display:none"></div>' +
+        '<button type="button" class="btn-del-mini" onclick="hapusGambarSoal(this)">✕ Hapus Gambar</button>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="file-section lampiran-section">' +
+      '<label>Lampiran File (opsional) — PDF, Word, Excel, audio, dll. Maks. 3 MB</label>' +
+      '<input type="file" class="fi-file fileLampiran" onchange="handleFileLampiran(this)">' +
+      '<div class="lampiran-chip" style="display:none">' +
+        '<span>📎</span>' +
+        '<span class="lampiran-nama"></span>' +
+        '<span class="lampiran-size"></span>' +
+        '<button type="button" class="btn-del-mini" onclick="hapusLampiran(this)">✕ Hapus</button>' +
       '</div>' +
     '</div>' +
 
@@ -991,8 +1112,15 @@ function buatOpsiRow(L, cardId, val) {
              ' onchange="handleFileOpsi(this)">' +
       '<button type="button" class="opt-img-toggle"' +
               ' onclick="toggleOptFile(this,\'' + pid + '\')" title="Tambah gambar">📎</button>' +
+      '<button type="button" class="opt-link-toggle"' +
+              ' onclick="toggleLinkOpsi(this)" title="Pakai link gambar">🔗</button>' +
       '<input type="file" class="opt-file-mobile file' + L + '" id="' + pid + '" data-pid="' + pid + '" accept="image/*"' +
              ' onchange="handleFileOpsi(this)">' +
+    '</div>' +
+    '<div class="opt-link-row">' +
+      '<input type="url" class="fi opt-link-input" placeholder="Tempel link gambar pilihan ' + L + ' (https://...)"' +
+             ' onkeydown="if(event.key===\'Enter\'){event.preventDefault();pasangLinkOpsi(this);}">' +
+      '<button type="button" class="btn-link" onclick="pasangLinkOpsi(this)">Pasang</button>' +
     '</div>';
   return wrap;
 }
@@ -1023,20 +1151,49 @@ function ubahJmlOpsi(btn, delta) {
   setJmlOpsi(card, next);
 }
 
-/* ===== HANDLER GAMBAR ===== */
+/* ===== HANDLER GAMBAR, LINK & LAMPIRAN ===== */
+
+/* --- Gambar soal --- */
+function setGambarSoal(section, src) {
+  var fileEl = section.querySelector('.fileSoal');
+  fileEl.dataset.b64 = src;
+  if (!isDataUrl(src)) fileEl.value = '';
+  var wrap = section.querySelector('.img-preview-wrap');
+  var img  = wrap.querySelector('.img-preview-soal');
+  img.referrerPolicy = 'no-referrer';
+  img.src = src;
+  wrap.style.display = 'block';
+  var note = wrap.querySelector('.img-src-note');
+  if (isDataUrl(src)) { note.style.display = 'none'; note.textContent = ''; }
+  else { note.style.display = 'block'; note.textContent = '🔗 Dari link: ' + src; }
+}
+
 function handleFileSoal(inputEl) {
   var file = inputEl.files[0];
   if (!file) return;
+  if (file.type.indexOf('image/') !== 0) {
+    toast('error', 'Bukan file gambar', 'Untuk file non-gambar gunakan kolom Lampiran File.');
+    inputEl.value = '';
+    return;
+  }
   var reader = new FileReader();
   reader.onload = function(e) {
-    inputEl.dataset.b64 = e.target.result;
-    var wrap = inputEl.closest('.file-section').querySelector('.img-preview-wrap');
-    var img  = wrap.querySelector('.img-preview-soal');
-    img.src = e.target.result;
-    wrap.style.display = 'block';
+    setGambarSoal(inputEl.closest('.file-section'), e.target.result);
     triggerLocalSave();
   };
   reader.readAsDataURL(file);
+}
+
+function pasangLinkSoal(el) {
+  var section = el.closest('.file-section');
+  var inp = section.querySelector('.linkSoal');
+  var btn = section.querySelector('.link-row .btn-link');
+  cekLinkGambar(inp.value, btn, function(url) {
+    setGambarSoal(section, url);
+    inp.value = '';
+    triggerLocalSave();
+    toast('success', 'Gambar dari link dipasang', '');
+  });
 }
 
 function hapusGambarSoal(btn) {
@@ -1044,57 +1201,92 @@ function hapusGambarSoal(btn) {
   var fileEl  = section.querySelector('.fileSoal');
   fileEl.value       = '';
   fileEl.dataset.b64 = '';
+  section.querySelector('.linkSoal').value = '';
   section.querySelector('.img-preview-wrap').style.display = 'none';
   triggerLocalSave();
+}
+
+/* --- Gambar pilihan --- */
+function tampilPreviewOpsi(row, src) {
+  var mob    = row.querySelector('.opt-file-mobile');
+  var wrapId = 'opt-prev-' + mob.id;
+  var prev   = document.getElementById(wrapId);
+
+  if (!prev) {
+    prev    = document.createElement('div');
+    prev.id = wrapId;
+    prev.style.cssText = 'margin:4px 0 4px 38px;display:flex;align-items:center;gap:8px';
+
+    var img = document.createElement('img');
+    img.style.cssText = 'max-height:60px;max-width:55%;border-radius:6px;border:1px solid var(--border)';
+    img.referrerPolicy = 'no-referrer';
+
+    var delBtn = document.createElement('button');
+    delBtn.type      = 'button';
+    delBtn.className = 'btn-del-mini';
+    delBtn.dataset.wrapid = wrapId;
+    delBtn.textContent = '✕ Hapus';
+    delBtn.onclick = function() { hapusGambarOpsi(this.dataset.wrapid); };
+
+    prev.appendChild(img);
+    prev.appendChild(delBtn);
+    row.insertAdjacentElement('afterend', prev);
+  }
+  prev.querySelector('img').src = src;
+  prev.style.display = 'flex';
+}
+
+/* src = data-URL (upload) atau link http(s) */
+function setOpsiImage(row, src) {
+  row.querySelectorAll('input[type="file"]').forEach(function(el) {
+    el.dataset.b64 = src;
+    if (!isDataUrl(src)) el.value = '';
+  });
+  tampilPreviewOpsi(row, src);
 }
 
 function handleFileOpsi(inputEl) {
   var file = inputEl.files[0];
   if (!file) return;
+  if (file.type.indexOf('image/') !== 0) {
+    toast('error', 'Bukan file gambar', 'Pilihan jawaban hanya bisa diberi gambar.');
+    inputEl.value = '';
+    return;
+  }
   var reader = new FileReader();
   reader.onload = function(e) {
-    inputEl.dataset.b64 = e.target.result;
-
-    var optionRow = inputEl.closest('.option-row');
-    var wrapId    = 'opt-prev-' + inputEl.dataset.pid;
-    var prev      = document.getElementById(wrapId);
-
-    if (!prev) {
-      prev    = document.createElement('div');
-      prev.id = wrapId;
-      prev.style.cssText = 'margin:4px 0 4px 38px;display:flex;align-items:center;gap:8px';
-
-      var img = document.createElement('img');
-      img.style.cssText = 'max-height:60px;border-radius:6px;border:1px solid var(--border)';
-
-      var delBtn = document.createElement('button');
-      delBtn.type      = 'button';
-      delBtn.dataset.wrapid = wrapId;
-      delBtn.style.cssText  =
-        'font-size:11px;color:var(--danger);background:var(--danger-soft);' +
-        'border:1px solid var(--danger);border-radius:6px;padding:3px 8px;' +
-        'cursor:pointer;font-family:var(--font);font-weight:700';
-      delBtn.textContent = '✕ Hapus';
-      delBtn.onclick = function() { hapusGambarOpsi(this.dataset.wrapid); };
-
-      prev.appendChild(img);
-      prev.appendChild(delBtn);
-      optionRow.insertAdjacentElement('afterend', prev);
-    }
-
-    prev.querySelector('img').src = e.target.result;
-    prev.style.display = 'flex';
+    setOpsiImage(inputEl.closest('.option-row'), e.target.result);
     triggerLocalSave();
   };
   reader.readAsDataURL(file);
 }
 
+function toggleLinkOpsi(btn) {
+  var linkRow = btn.closest('.option-row').parentElement.querySelector('.opt-link-row');
+  linkRow.classList.toggle('show');
+  if (linkRow.classList.contains('show')) linkRow.querySelector('input').focus();
+}
+
+function pasangLinkOpsi(el) {
+  var linkRow = el.closest('.opt-link-row');
+  var row     = linkRow.parentElement.querySelector('.option-row');
+  var inp     = linkRow.querySelector('.opt-link-input');
+  var btn     = linkRow.querySelector('.btn-link');
+  cekLinkGambar(inp.value, btn, function(url) {
+    setOpsiImage(row, url);
+    inp.value = '';
+    linkRow.classList.remove('show');
+    triggerLocalSave();
+    toast('success', 'Gambar dari link dipasang', '');
+  });
+}
+
 function hapusGambarOpsi(wrapId) {
   var prev = document.getElementById(wrapId);
   if (!prev) return;
-  var sibling = prev.previousElementSibling;
-  if (sibling) {
-    sibling.querySelectorAll('input[type="file"]').forEach(function(el) {
+  var row = prev.parentElement.querySelector('.option-row');
+  if (row) {
+    row.querySelectorAll('input[type="file"]').forEach(function(el) {
       el.value = ''; el.dataset.b64 = '';
     });
   }
@@ -1102,60 +1294,67 @@ function hapusGambarOpsi(wrapId) {
   triggerLocalSave();
 }
 
+/* --- Lampiran file soal --- */
+function tampilLampiran(section, nama, size) {
+  section.querySelector('.lampiran-nama').textContent = nama || 'Lampiran';
+  section.querySelector('.lampiran-size').textContent = size ? formatUkuran(size) : '';
+  section.querySelector('.lampiran-chip').style.display = 'flex';
+}
+
+function handleFileLampiran(inputEl) {
+  var file = inputEl.files[0];
+  if (!file) return;
+  if (file.size > MAX_LAMPIRAN) {
+    toast('error', 'File terlalu besar',
+      escHtml(file.name) + ' berukuran ' + formatUkuran(file.size) + '. Maksimal 3 MB per lampiran.', 5000);
+    inputEl.value = '';
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    inputEl.dataset.b64  = e.target.result;
+    inputEl.dataset.nama = file.name;
+    inputEl.dataset.size = file.size;
+    tampilLampiran(inputEl.closest('.file-section'), file.name, file.size);
+    triggerLocalSave();
+  };
+  reader.readAsDataURL(file);
+}
+
+function hapusLampiran(btn) {
+  var section = btn.closest('.file-section');
+  var el = section.querySelector('.fileLampiran');
+  el.value = '';
+  el.dataset.b64 = ''; el.dataset.nama = ''; el.dataset.size = '';
+  section.querySelector('.lampiran-chip').style.display = 'none';
+  triggerLocalSave();
+}
+
+/* --- Pulihkan dari draft --- */
 function restoreImagePreview(card, item) {
   if (item.gambarSoal) {
-    var fileEl = card.querySelector('.fileSoal');
-    if (fileEl) {
-      fileEl.dataset.b64 = item.gambarSoal;
-      var wrap = card.querySelector('.img-preview-wrap');
-      var img  = card.querySelector('.img-preview-soal');
-      if (wrap && img) { img.src = item.gambarSoal; wrap.style.display = 'block'; }
+    var fs = card.querySelector('.fileSoal');
+    if (fs) setGambarSoal(fs.closest('.file-section'), item.gambarSoal);
+  }
+
+  if (item.lampiran && item.lampiran.data) {
+    var fl = card.querySelector('.fileLampiran');
+    if (fl) {
+      fl.dataset.b64  = item.lampiran.data;
+      fl.dataset.nama = item.lampiran.nama || '';
+      fl.dataset.size = item.lampiran.size || 0;
+      tampilLampiran(fl.closest('.file-section'), item.lampiran.nama, item.lampiran.size);
     }
   }
 
   if (item.gambarOpsi) {
     Object.entries(item.gambarOpsi).forEach(function(entry) {
       var L   = entry[0];
-      var b64 = entry[1];
-      if (!b64) return;
-
+      var src = entry[1];
+      if (!src) return;
       var fM = card.querySelector('.opt-file-mobile.file' + L);
       if (!fM) return;
-      fM.dataset.b64 = b64;
-
-      var fD = card.querySelector('.opt-file.file' + L);
-      if (fD) fD.dataset.b64 = b64;
-
-      var wrapId = 'opt-prev-' + fM.id;
-      var prev   = document.getElementById(wrapId);
-
-      if (!prev) {
-        prev    = document.createElement('div');
-        prev.id = wrapId;
-        prev.style.cssText = 'margin:4px 0 4px 38px;display:flex;align-items:center;gap:8px';
-
-        var imgEl = document.createElement('img');
-        imgEl.style.cssText = 'max-height:60px;border-radius:6px;border:1px solid var(--border)';
-
-        var delBtn = document.createElement('button');
-        delBtn.type             = 'button';
-        delBtn.dataset.wrapid   = wrapId;
-        delBtn.style.cssText    =
-          'font-size:11px;color:var(--danger);background:var(--danger-soft);' +
-          'border:1px solid var(--danger);border-radius:6px;padding:3px 8px;' +
-          'cursor:pointer;font-family:var(--font);font-weight:700';
-        delBtn.textContent = '✕ Hapus';
-        delBtn.onclick = function() { hapusGambarOpsi(this.dataset.wrapid); };
-
-        prev.appendChild(imgEl);
-        prev.appendChild(delBtn);
-
-        var optionRow = fM.closest('.option-row');
-        if (optionRow) optionRow.insertAdjacentElement('afterend', prev);
-      }
-
-      prev.querySelector('img').src = b64;
-      prev.style.display = 'flex';
+      setOpsiImage(fM.closest('.option-row'), src);
     });
   }
 }
@@ -1220,6 +1419,12 @@ function showPreviewModal() {
       bodyHTML += '<img src="' + soalB64 + '" class="pv-img">';
     } else if (fileSoal) {
       bodyHTML += '<img src="' + URL.createObjectURL(fileSoal) + '" class="pv-img">';
+    }
+
+    var lam = getLampiran(card);
+    if (lam.data) {
+      bodyHTML += '<div class="pv-lampiran">📎 ' + escHtml(lam.nama || 'Lampiran') +
+                  (lam.size ? ' · ' + formatUkuran(lam.size) : '') + '</div>';
     }
 
     bodyHTML += '<div class="pv-opsi-list">';
@@ -1318,6 +1523,10 @@ async function prosesKirim() {
         'kunci jawaban'      : card.querySelector('.kunci').value.trim().toUpperCase()
       }
     };
+
+    var lamEl = card.querySelector('.fileLampiran');
+    obj.data['lampiran soal'] = getCachedB64(lamEl);
+    obj.data['nama lampiran'] = (lamEl && lamEl.dataset.nama) || '';
 
     for (var i = 0; i < 12; i++) {
       var L  = LABELS[i];
