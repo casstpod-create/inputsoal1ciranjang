@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Input Soal — Sistem Ujian Digital</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
@@ -443,7 +443,7 @@ input[type="file"].fi-file {
 .sticky-bar {
   position: fixed; bottom: 0; left: 0; width: 100%;
   background: var(--surface); border-top: 1px solid var(--border);
-  padding: 10px 16px env(safe-area-inset-bottom, 0px);
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
   z-index: 1000; box-shadow: 0 -6px 28px rgba(0,0,0,.1);
 }
 .sticky-inner {
@@ -578,7 +578,193 @@ input[type="file"].fi-file {
 @keyframes logoShine { 0%{background-position:160% 0} 55%,100%{background-position:-60% 0} }
 @keyframes logoFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
 @media (prefers-reduced-motion: reduce) { .logo-shine, .logo-shine::after { animation: none; } }
+
+/* ===== EQUATION / RUMUS ===== */
+.lbl-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.btn-eq {
+  padding: 5px 13px; border-radius: 99px;
+  border: 1.5px solid var(--accent); background: var(--accent-soft); color: var(--accent);
+  font-family: var(--font); font-size: 12px; font-weight: 800; cursor: pointer;
+  transition: .15s; white-space: nowrap;
+}
+.btn-eq:hover, .btn-eq:active { background: var(--accent); color: #fff; }
+.opt-eq-toggle {
+  width: 32px; height: 32px; border-radius: var(--radius-xs);
+  border: 1.5px solid var(--accent-mid); background: var(--accent-soft); color: var(--accent);
+  font-size: 15px; font-weight: 800; font-family: var(--font); line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0; transition: .15s;
+}
+.opt-eq-toggle:hover, .opt-eq-toggle:active { background: var(--accent); color: #fff; }
+
+.math-preview {
+  margin-top: 6px; padding: 8px 12px;
+  background: #f8fbff; border: 1px dashed var(--accent-mid); border-radius: var(--radius-xs);
+  font-size: 15px; line-height: 1.7; overflow-x: auto; color: var(--text);
+}
+.opt-math-preview { margin: 4px 0 4px 38px; }
+.mp-tag {
+  font-size: 9px; font-weight: 800; color: var(--accent);
+  text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px;
+}
+.mp-body .katex-display { margin: .5em 0; }
+
+.eq-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.eq-tab {
+  padding: 6px 12px; border-radius: 99px; border: 1.5px solid var(--border);
+  background: var(--surface); color: var(--muted);
+  font-family: var(--font); font-size: 12px; font-weight: 700; cursor: pointer; transition: .15s;
+}
+.eq-tab:hover { border-color: var(--accent-mid); color: var(--accent); }
+.eq-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.eq-palette {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); gap: 6px;
+  max-height: 176px; overflow-y: auto; padding: 8px; margin-bottom: 14px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-xs);
+}
+.eq-sym {
+  height: 44px; padding: 0 4px; border: 1px solid var(--border); background: var(--surface);
+  border-radius: 8px; cursor: pointer; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font); font-size: 13px; color: var(--text); transition: .12s;
+}
+.eq-sym:hover, .eq-sym:active { border-color: var(--accent); background: var(--accent-soft); }
+.eq-sym .katex { font-size: 1em; }
+.eq-lbl {
+  display: block; margin-bottom: 5px;
+  font-size: 10px; font-weight: 800; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .06em;
+}
+.eq-input {
+  width: 100%; padding: 10px 12px; margin-bottom: 12px;
+  border: 1.5px solid var(--border); border-radius: var(--radius-xs);
+  font-family: var(--mono); font-size: 13px; line-height: 1.5; color: var(--text);
+  background: var(--surface); outline: none; resize: vertical; min-height: 70px;
+}
+.eq-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+.eq-preview {
+  min-height: 62px; padding: 12px; margin-bottom: 10px;
+  border: 1.5px solid var(--border); border-radius: var(--radius-xs); background: #fff;
+  font-size: 18px; overflow-x: auto;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+}
+.eq-preview .eq-empty { font-size: 12px; color: var(--muted); }
+.eq-preview .eq-err { font-size: 12px; color: var(--danger); font-family: var(--mono); text-align: left; }
+.eq-check { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; margin-bottom: 8px; cursor: pointer; }
+.eq-hint { font-size: 11.5px; color: var(--muted); line-height: 1.6; }
+.eq-hint code { background: var(--bg); padding: 1px 5px; border-radius: 4px; font-family: var(--mono); font-size: 11px; }
+
+/* ===== MOBILE-FRIENDLY ===== */
+.bar-tools { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.soal-card { scroll-margin-top: 20px; }
+button, a, input, select, textarea { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+#modal-overlay { overscroll-behavior: contain; }
+.modal-box { overscroll-behavior: contain; }
+
+@media (max-width: 640px) {
+  body { padding: 12px 10px calc(132px + env(safe-area-inset-bottom, 0px)); }
+
+  /* semua kolom 16px agar iOS tidak auto-zoom saat fokus */
+  .fi, .opt-input, .eq-input, .prefix-row input, .kunci-input, .stepper .jmlPilihan { font-size: 16px; }
+  .fi { padding: 12px; min-height: 46px; }
+  textarea.fi { min-height: 96px; }
+  .opt-input { min-height: 44px; padding: 10px 12px; }
+  .field-group label, .kunci-row label, .file-section label, .eq-lbl { font-size: 11px; }
+
+  /* header ringkas */
+  .page-header { padding: 18px 14px 16px; margin-bottom: 12px; }
+  .page-header h1 { font-size: 19px; }
+  .logo-shine { width: 76px; height: 74px; margin-bottom: 8px; }
+  .prefix-row { max-width: 100%; }
+  .prefix-row input { padding: 12px; }
+  .autosave-status { font-size: 11px; margin-top: 10px; }
+
+  .restore-banner { flex-direction: column; align-items: stretch; }
+  .restore-actions { width: 100%; }
+  .btn-restore { flex: 1; min-height: 44px; font-size: 13px; }
+
+  .mapel-panel { padding: 14px 14px 16px; }
+  .mapel-panel-title { font-size: 12px; line-height: 1.4; }
+
+  /* kartu soal */
+  .soal-card { padding: 22px 14px 16px; margin-bottom: 18px; }
+  .nomor-soal { left: 14px; }
+  .card-meta-row { grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .card-meta-row > .field-group:first-child { grid-column: 1 / -1; }
+  .card-meta-row .stepper { width: 100%; }
+  .step-btn { width: 48px; min-height: 46px; font-size: 22px; }
+  .stepper .jmlPilihan { flex: 1; width: auto; min-width: 0; }
+  .btn-hapus { min-height: 46px; font-size: 13px; }
+
+  /* gambar & lampiran */
+  .file-section { padding: 12px; }
+  input[type="file"].fi-file { padding: 9px; font-size: 13px; min-height: 44px; }
+  .link-row { flex-direction: column; }
+  .btn-link { min-height: 44px; font-size: 13px; }
+  .btn-del-mini { padding: 8px 14px; font-size: 12px; min-height: 36px; }
+  .img-preview-soal { max-height: 200px; }
+  .lampiran-chip { flex-wrap: wrap; }
+
+  /* opsi: input di baris atas, tombol aksi di baris bawah */
+  .option-row { flex-wrap: wrap; padding: 10px; row-gap: 8px; }
+  .opt-label { width: 32px; height: 32px; font-size: 13px; }
+  .opt-input { flex: 1 1 calc(100% - 46px); }
+  .opt-eq-toggle, .opt-img-toggle, .opt-link-toggle { width: 44px; height: 40px; font-size: 16px; }
+  .opt-eq-toggle { margin-left: 40px; }
+  .opt-file-mobile { font-size: 13px; padding: 9px; min-height: 44px; flex-basis: 100%; }
+  .opt-link-row { margin-left: 0; flex-direction: column; }
+  .opt-math-preview { margin-left: 0; }
+  .math-preview { font-size: 15px; }
+
+  .kunci-row { background: var(--bg); border-radius: var(--radius-sm); padding: 10px 12px; justify-content: space-between; }
+  .kunci-input { width: 76px; padding: 10px 8px; }
+
+  .btn-add { padding: 16px 20px; font-size: 14px; max-width: 100%; }
+
+  /* bar bawah: 2 baris (tombol bantu bisa digeser, lalu jumlah soal + kirim) */
+  .sticky-bar { padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)); }
+  .sticky-inner { gap: 8px; flex-wrap: wrap; }
+  .bar-actions { display: contents; }
+  .bar-tools {
+    order: 1; width: 100%; flex-wrap: nowrap; justify-content: flex-start;
+    overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .bar-tools::-webkit-scrollbar { display: none; }
+  .bar-tools > * { flex-shrink: 0; min-height: 40px; padding: 9px 14px; font-size: 13px; }
+  .count-info { order: 2; font-size: 12px; line-height: 1.1; text-align: center; min-width: 58px; }
+  .count-info strong { font-size: 22px; display: block; }
+  .btn-kirim { order: 3; flex: 1; justify-content: center; min-height: 48px; font-size: 15px; border-radius: 14px; }
+
+  /* modal sebagai bottom sheet */
+  .modal-box { padding: 14px 16px calc(16px + env(safe-area-inset-bottom, 0px)); max-height: 92vh; max-height: 92dvh; }
+  .modal-close { width: 40px; height: 40px; }
+  .modal-footer-row {
+    flex-direction: row; gap: 10px; position: sticky; bottom: calc(-16px - env(safe-area-inset-bottom, 0px));
+    background: var(--surface); padding: 12px 0 0; margin-top: 16px;
+  }
+  .modal-btn { flex: 1; min-height: 48px; padding: 12px 10px; font-size: 15px; }
+  .pv-img { max-height: 220px; }
+
+  /* editor rumus */
+  .eq-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .eq-tabs::-webkit-scrollbar { display: none; }
+  .eq-tab { flex-shrink: 0; padding: 9px 14px; font-size: 13px; }
+  .eq-palette { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); max-height: 190px; }
+  .eq-sym { height: 48px; }
+  .eq-input { min-height: 84px; }
+  .eq-check { padding: 6px 0; font-size: 14px; }
+
+  #toast-container { top: calc(10px + env(safe-area-inset-top, 0px)); }
+}
+
+@media (max-width: 360px) {
+  .bar-tools > * { padding: 9px 11px; }
+  .opt-eq-toggle { margin-left: 0; }
+}
 </style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 </head>
 <body>
 
@@ -666,11 +852,13 @@ input[type="file"].fi-file {
       <strong id="counter">0</strong> soal
     </div>
     <div class="bar-actions">
+      <div class="bar-tools">
       <a class="btn-cetak" href="https://casstpod-create.github.io/cetaksoal1ciranjang/" target="_blank" rel="noopener noreferrer">🖨 Cetak Soal</a>
       <a class="btn-nilai" href="https://casstpod-create.github.io/CEKNILAIWALAS1CIRANJANG/" target="_blank" rel="noopener noreferrer">📊 Cek Nilai</a>
       <a class="btn-analisis" href="https://casstpod-create.github.io/anasoal1ciranjang/" target="_blank" rel="noopener noreferrer">📈 Analisis Butir Soal</a>
       <button class="btn-preview"     onclick="showPreviewModal()">👁 Preview</button>
       <button class="btn-clear-local" onclick="confirmClearLocal()">🗑 Bersihkan</button>
+      </div>
       <button class="btn-kirim" id="btnKirim" onclick="kirimSemuaData()">Kirim ke Server →</button>
     </div>
   </div>
@@ -721,8 +909,9 @@ function showModal(title, bodyHTML, buttons) {
     footer.appendChild(btn);
   });
   document.getElementById('modal-overlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
 }
-function closeModal() { document.getElementById('modal-overlay').classList.remove('show'); }
+function closeModal() { document.getElementById('modal-overlay').classList.remove('show'); document.body.style.overflow = ''; }
 function handleOverlayClick(e) {
   if (e.target === document.getElementById('modal-overlay')) closeModal();
 }
@@ -988,6 +1177,273 @@ function toggleOptFile(btn, fileId) {
   }
 }
 
+/* ===== EQUATION (LaTeX via KaTeX) =====
+   Format penyimpanan: rumus ditulis di dalam teks soal/pilihan dengan pembatas
+     $ ... $    -> rumus sebaris
+     $$ ... $$  -> rumus di baris sendiri
+   Tanda dolar biasa (mis. harga) tulis sebagai \$ agar tidak dianggap rumus. */
+var MATH_RE = /(?<!\\)\$\$([\s\S]+?)\$\$|(?<!\\)\$((?:\\.|[^$\\\n])+?)\$/g;
+
+function renderMath(text) {
+  text = String(text == null ? '' : text);
+  function plain(s) { return escHtml(s.replace(/\\\$/g, '$')).replace(/\n/g, '<br>'); }
+  var out = '', last = 0, m;
+  MATH_RE.lastIndex = 0;
+  while ((m = MATH_RE.exec(text)) !== null) {
+    out += plain(text.slice(last, m.index));
+    var display = m[1] !== undefined;
+    var tex = (display ? m[1] : m[2]).trim();
+    if (window.katex) {
+      try {
+        out += katex.renderToString(tex, { displayMode: display, throwOnError: false, strict: 'ignore' });
+      } catch (e) { out += '<code>' + escHtml(m[0]) + '</code>'; }
+    } else {
+      out += '<code>' + escHtml(m[0]) + '</code>';
+    }
+    last = m.index + m[0].length;
+  }
+  return out + plain(text.slice(last));
+}
+
+function mathBoxFor(el) {
+  if (el.classList.contains('soalText')) return el.closest('.field-group').querySelector('.math-preview');
+  var row = el.closest('.option-row');
+  return row ? row.parentElement.querySelector('.math-preview') : null;
+}
+
+function refreshMath(el) {
+  var box = mathBoxFor(el);
+  if (!box) return;
+  if (!/(?<!\\)\$/.test(el.value)) { box.style.display = 'none'; box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="mp-tag">Pratinjau rumus</div><div class="mp-body">' + renderMath(el.value) + '</div>';
+  box.style.display = 'block';
+}
+function refreshCardMath(card) {
+  card.querySelectorAll('.soalText, .opt-input').forEach(refreshMath);
+}
+function refreshAllMath() {
+  document.querySelectorAll('.soalText, .opt-input').forEach(refreshMath);
+}
+
+/* simpan posisi kursor terakhir tiap kolom (hilang saat tombol Rumus diklik) */
+document.addEventListener('focusout', function(e) {
+  var t = e.target;
+  if (t && t.matches && t.matches('.soalText, .opt-input')) {
+    t.dataset.cs = t.selectionStart;
+    t.dataset.ce = t.selectionEnd;
+  }
+});
+window.addEventListener('load', refreshAllMath);
+
+/* --- Palet simbol: [label LaTeX, potongan yang disisipkan]; @@ = posisi kursor --- */
+function sym(t) { return [t, t + ' ']; }
+var EQ_GROUPS = [
+  { n: 'Dasar', items: [
+    ['\\frac{a}{b}', '\\frac{@@}{}'],
+    ['\\sqrt{x}', '\\sqrt{@@}'],
+    ['\\sqrt[n]{x}', '\\sqrt[@@]{}'],
+    ['x^{n}', '^{@@}'],
+    ['x_{n}', '_{@@}'],
+    ['x_{i}^{n}', '_{@@}^{}'],
+    ['(\\,)', '\\left(@@\\right)'],
+    ['|x|', '\\left|@@\\right|'],
+    sym('\\times'), sym('\\div'), sym('\\pm'), sym('\\mp'), sym('\\cdot'),
+    sym('\\neq'), sym('\\approx'), sym('\\leq'), sym('\\geq'), sym('<'), sym('>'),
+    ['\\%', '\\% ']
+  ]},
+  { n: 'Simbol', items: [
+    sym('\\infty'), ['^{\\circ}', '^{\\circ} '], sym('\\angle'), sym('\\triangle'), sym('\\perp'),
+    sym('\\parallel'), sym('\\cong'), sym('\\sim'), sym('\\therefore'), sym('\\because'),
+    sym('\\in'), sym('\\notin'), sym('\\subset'), sym('\\subseteq'), sym('\\cup'), sym('\\cap'),
+    sym('\\emptyset'), sym('\\forall'), sym('\\exists'), sym('\\to'), sym('\\Rightarrow'),
+    sym('\\Leftrightarrow'), sym('\\propto'), sym('\\ldots'),
+    ['\\mathbb{R}', '\\mathbb{R} '], ['\\mathbb{N}', '\\mathbb{N} '], ['\\mathbb{Z}', '\\mathbb{Z} '], ['\\mathbb{Q}', '\\mathbb{Q} ']
+  ]},
+  { n: 'Yunani', items: [
+    sym('\\alpha'), sym('\\beta'), sym('\\gamma'), sym('\\delta'), sym('\\varepsilon'), sym('\\theta'),
+    sym('\\lambda'), sym('\\mu'), sym('\\pi'), sym('\\rho'), sym('\\sigma'), sym('\\tau'),
+    sym('\\phi'), sym('\\omega'), sym('\\Delta'), sym('\\Sigma'), sym('\\Phi'), sym('\\Omega')
+  ]},
+  { n: 'Kalkulus', items: [
+    ['\\sum_{i=1}^{n}', '\\sum_{i=1}^{@@} '],
+    ['\\prod_{i=1}^{n}', '\\prod_{i=1}^{@@} '],
+    ['\\int_{a}^{b}', '\\int_{@@}^{} \\,dx'],
+    ['\\lim_{x\\to a}', '\\lim_{x \\to @@} '],
+    ['\\frac{d}{dx}', '\\frac{d}{dx}@@'],
+    ['\\log_{a}', '\\log_{@@} '],
+    sym('\\ln'), sym('\\sin'), sym('\\cos'), sym('\\tan'),
+    ['\\binom{n}{k}', '\\binom{@@}{}'],
+    ['n!', '! ']
+  ]},
+  { n: 'Matriks & Garis', items: [
+    ['\\begin{pmatrix}a&b\\\\c&d\\end{pmatrix}', '\\begin{pmatrix} @@ &  \\\\  &  \\end{pmatrix}'],
+    ['\\begin{vmatrix}a&b\\\\c&d\\end{vmatrix}', '\\begin{vmatrix} @@ &  \\\\  &  \\end{vmatrix}'],
+    ['\\begin{cases}x\\\\y\\end{cases}', '\\begin{cases} @@ \\\\  \\end{cases}'],
+    ['\\overline{AB}', '\\overline{@@}'],
+    ['\\overrightarrow{AB}', '\\overrightarrow{@@}'],
+    ['\\vec{v}', '\\vec{@@}'],
+    ['\\hat{x}', '\\hat{@@}'],
+    ['\\bar{x}', '\\bar{@@}'],
+    ['\\widehat{ABC}', '\\widehat{@@}'],
+    ['\\text{teks}', '\\text{@@}']
+  ]},
+  { n: 'Sains', items: [
+    ['\\mathrm{H_{2}O}', '\\mathrm{H_{2}O} '],
+    ['\\mathrm{CO_{2}}', '\\mathrm{CO_{2}} '],
+    ['\\mathrm{Na^{+}}', '\\mathrm{Na^{+}} '],
+    ['\\mathrm{SO_{4}^{2-}}', '\\mathrm{SO_{4}^{2-}} '],
+    ['\\mathrm{x}', '\\mathrm{@@}'],
+    sym('\\rightarrow'), sym('\\rightleftharpoons'), sym('\\uparrow'), sym('\\downarrow'),
+    ['\\xrightarrow{\\Delta}', '\\xrightarrow{@@}'],
+    ['\\vec{F}', '\\vec{F} '],
+    ['\\text{ m/s}^{2}', '\\text{ m/s}^{2} '],
+    ['\\text{ kg}', '\\text{ kg} '],
+    sym('\\Omega'), sym('\\mu'), sym('\\lambda')
+  ]}
+];
+
+var EQ = { el: null, start: 0, end: 0, group: 0 };
+
+function eqById(id) { return document.getElementById(id); }
+
+function bukaEquation(btn) {
+  var row = btn.closest('.option-row');
+  var field = row ? row.querySelector('.opt-input') : btn.closest('.field-group').querySelector('.soalText');
+  if (!field) return;
+
+  var val = field.value;
+  var s = field.dataset.cs !== undefined ? parseInt(field.dataset.cs) : val.length;
+  var e = field.dataset.ce !== undefined ? parseInt(field.dataset.ce) : val.length;
+  if (isNaN(s) || isNaN(e)) { s = e = val.length; }
+  s = Math.min(s, val.length); e = Math.min(e, val.length);
+
+  /* kalau kursor berada di dalam rumus yang sudah ada -> mode edit */
+  var prefill = '', isDisplay = false, editing = false, m;
+  MATH_RE.lastIndex = 0;
+  while ((m = MATH_RE.exec(val)) !== null) {
+    var a = m.index, b = m.index + m[0].length;
+    if (s >= a && e <= b && !(s === a && e === a)) {
+      s = a; e = b; editing = true;
+      isDisplay = m[1] !== undefined;
+      prefill = (isDisplay ? m[1] : m[2]).trim();
+      break;
+    }
+  }
+  if (!editing && e > s) prefill = val.slice(s, e).replace(/\n/g, ' ');
+
+  EQ.el = field; EQ.start = s; EQ.end = e; EQ.group = 0;
+
+  var tabs = EQ_GROUPS.map(function(g, i) {
+    return '<button type="button" class="eq-tab' + (i === 0 ? ' active' : '') + '" data-g="' + i + '">' + g.n + '</button>';
+  }).join('');
+
+  var body =
+    '<div class="eq-tabs">' + tabs + '</div>' +
+    '<div class="eq-palette" id="eq-palette"></div>' +
+    '<label class="eq-lbl" for="eq-input">Kode rumus (LaTeX) — klik simbol di atas atau ketik langsung</label>' +
+    '<textarea id="eq-input" class="eq-input" spellcheck="false" autocapitalize="off" autocomplete="off" ' +
+      'placeholder="Contoh: x = \\frac{-b \\pm \\sqrt{b^{2}-4ac}}{2a}"></textarea>' +
+    '<div class="eq-lbl">Pratinjau</div>' +
+    '<div class="eq-preview" id="eq-preview"></div>' +
+    '<label class="eq-check"><input type="checkbox" id="eq-display"> Tampilkan di baris tersendiri (besar &amp; rata tengah)</label>' +
+    '<div class="eq-hint">Tips: blok teks lebih dulu lalu klik simbol (mis. pecahan/akar) agar teks terpilih masuk ke dalamnya. ' +
+    'Rumus tersimpan dalam teks sebagai <code>$...$</code>. Untuk tanda dolar biasa tulis <code>\\$</code>.</div>';
+
+  showModal(editing ? 'Edit Rumus' : 'Sisipkan Rumus', body, [
+    { label: 'Batal', cls: 'ghost' },
+    { label: editing ? 'Simpan Rumus' : 'Sisipkan Rumus', cls: 'primary', action: sisipkanEquation }
+  ]);
+
+  eqById('eq-input').value = prefill;
+  eqById('eq-display').checked = isDisplay;
+  eqById('eq-input').addEventListener('input', updateEqPreview);
+  eqById('eq-display').addEventListener('change', updateEqPreview);
+  document.querySelectorAll('#modal-body .eq-tab').forEach(function(t) {
+    t.addEventListener('click', function() {
+      document.querySelectorAll('#modal-body .eq-tab').forEach(function(x) { x.classList.remove('active'); });
+      t.classList.add('active');
+      renderEqPalette(parseInt(t.dataset.g));
+    });
+  });
+  renderEqPalette(0);
+  updateEqPreview();
+  setTimeout(function() {
+    var ta = eqById('eq-input');
+    if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+  }, 60);
+}
+
+function renderEqPalette(gi) {
+  var pal = eqById('eq-palette');
+  pal.innerHTML = '';
+  EQ_GROUPS[gi].items.forEach(function(it) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'eq-sym';
+    b.title = it[1].replace('@@', '').trim();
+    if (window.katex) {
+      try { b.innerHTML = katex.renderToString(it[0], { throwOnError: false, strict: 'ignore' }); }
+      catch (e) { b.textContent = it[0]; }
+    } else { b.textContent = it[0]; }
+    b.addEventListener('mousedown', function(ev) { ev.preventDefault(); });
+    b.addEventListener('click', function() { eqSisipSnippet(it[1]); });
+    pal.appendChild(b);
+  });
+}
+
+function eqSisipSnippet(snip) {
+  var ta  = eqById('eq-input');
+  var pos = snip.indexOf('@@');
+  var txt = snip.replace('@@', '');
+  var s = ta.selectionStart, e = ta.selectionEnd;
+  var sel = ta.value.slice(s, e);
+  var caret;
+  if (sel && pos >= 0) {
+    txt = txt.slice(0, pos) + sel + txt.slice(pos);
+    caret = s + pos + sel.length;
+  } else {
+    caret = s + (pos >= 0 ? pos : txt.length);
+  }
+  ta.value = ta.value.slice(0, s) + txt + ta.value.slice(e);
+  ta.focus();
+  ta.setSelectionRange(caret, caret);
+  updateEqPreview();
+}
+
+function updateEqPreview() {
+  var box = eqById('eq-preview');
+  var tex = eqById('eq-input').value.trim();
+  if (!tex) { box.innerHTML = '<span class="eq-empty">Rumus akan tampil di sini</span>'; return; }
+  if (!window.katex) {
+    box.innerHTML = '<span class="eq-err">Pustaka KaTeX belum termuat (perlu koneksi internet). Rumus tetap bisa disisipkan.</span>';
+    return;
+  }
+  try {
+    box.innerHTML = katex.renderToString(tex, {
+      displayMode: eqById('eq-display').checked, throwOnError: true, strict: 'ignore'
+    });
+  } catch (err) {
+    box.innerHTML = '<span class="eq-err">Rumus belum valid: ' + escHtml(String(err.message || err).replace(/^KaTeX parse error:\s*/, '')) + '</span>';
+  }
+}
+
+function sisipkanEquation() {
+  var tex = eqById('eq-input').value.trim();
+  if (!tex || !EQ.el) return;
+  var disp = eqById('eq-display').checked;
+  tex = tex.replace(/\$/g, '').replace(/\s*\n\s*/g, ' ');
+  var wrapped = disp ? '$$' + tex + '$$' : '$' + tex + '$';
+  var v = EQ.el.value;
+  EQ.el.value = v.slice(0, EQ.start) + wrapped + v.slice(EQ.end);
+  var caret = EQ.start + wrapped.length;
+  EQ.el.focus();
+  EQ.el.setSelectionRange(caret, caret);
+  EQ.el.dataset.cs = caret; EQ.el.dataset.ce = caret;
+  refreshMath(EQ.el);
+  triggerLocalSave();
+  toast('success', 'Rumus disisipkan', 'Pratinjau tampil di bawah kolom.', 2200);
+}
+
 /* ===== TAMBAH SOAL ===== */
 function tambahSoal() {
   soalCount++;
@@ -1016,7 +1472,7 @@ function tambahSoal() {
   });
   updateCounter();
   triggerLocalSave();
-  setTimeout(function() { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); }, 60);
+  setTimeout(function() { var cs = document.querySelectorAll('.soal-card'); var last = cs[cs.length - 1]; if (last) last.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
 }
 
 function tambahSoalDariDraft(item) {
@@ -1052,10 +1508,12 @@ function buatKartu(nomor, item) {
     '</div>' +
 
     '<div class="field-group" style="margin-bottom:12px">' +
-      '<label>Teks Soal *</label>' +
-      '<textarea class="fi soalText" rows="3" placeholder="Tuliskan pertanyaan di sini..." oninput="triggerLocalSave()">' +
+      '<div class="lbl-row"><label>Teks Soal *</label>' +
+        '<button type="button" class="btn-eq" onclick="bukaEquation(this)" title="Sisipkan rumus/equation">∑ Rumus</button></div>' +
+      '<textarea class="fi soalText" rows="3" placeholder="Tuliskan pertanyaan di sini... (klik ∑ Rumus untuk menyisipkan rumus)" oninput="triggerLocalSave();refreshMath(this)">' +
         escHtml(item.soal || '') +
       '</textarea>' +
+      '<div class="math-preview" style="display:none"></div>' +
     '</div>' +
 
     '<div class="file-section">' +
@@ -1095,6 +1553,7 @@ function buatKartu(nomor, item) {
 
   container.appendChild(div);
   renderOpsi(div.querySelector('.opsi-wrapper'), item.jml || 4, item.pilihan || [], div.id);
+  refreshCardMath(div);
 }
 
 /* ===== RENDER OPSI ===== */
@@ -1107,7 +1566,8 @@ function buatOpsiRow(L, cardId, val) {
       '<input type="text" class="opt-input pilihan' + L + '"' +
              ' value="' + escHtml(val || '') + '"' +
              ' placeholder="Pilihan jawaban ' + L + '"' +
-             ' oninput="triggerLocalSave()">' +
+             ' oninput="triggerLocalSave();refreshMath(this)">' +
+      '<button type="button" class="opt-eq-toggle" onclick="bukaEquation(this)" title="Sisipkan rumus">∑</button>' +
       '<input type="file" class="opt-file file' + L + '" data-pid="' + pid + '" accept="image/*"' +
              ' onchange="handleFileOpsi(this)">' +
       '<button type="button" class="opt-img-toggle"' +
@@ -1117,6 +1577,7 @@ function buatOpsiRow(L, cardId, val) {
       '<input type="file" class="opt-file-mobile file' + L + '" id="' + pid + '" data-pid="' + pid + '" accept="image/*"' +
              ' onchange="handleFileOpsi(this)">' +
     '</div>' +
+    '<div class="math-preview opt-math-preview" style="display:none"></div>' +
     '<div class="opt-link-row">' +
       '<input type="url" class="fi opt-link-input" placeholder="Tempel link gambar pilihan ' + L + ' (https://...)"' +
              ' onkeydown="if(event.key===\'Enter\'){event.preventDefault();pasangLinkOpsi(this);}">' +
@@ -1413,7 +1874,7 @@ function showPreviewModal() {
           '<span class="pv-num">Soal #' + (idx + 1) + '</span>' +
           '<span class="pv-kode">' + kode2 + '</span>' +
         '</div>' +
-        '<div class="pv-soal">' + soalText.replace(/\n/g, '<br>') + '</div>';
+        '<div class="pv-soal">' + renderMath(soalText) + '</div>';
 
     if (soalB64) {
       bodyHTML += '<img src="' + soalB64 + '" class="pv-img">';
@@ -1440,7 +1901,7 @@ function showPreviewModal() {
         '<div class="pv-opsi' + (isK ? ' kunci' : '') + '">' +
           '<div class="pv-key">' + L + '</div>' +
           '<div>' +
-            '<div class="pv-opsi-text">' + txt + (isK ? '<span class="pv-kunci-badge">KUNCI</span>' : '') + '</div>' +
+            '<div class="pv-opsi-text">' + renderMath(txt) + (isK ? '<span class="pv-kunci-badge">KUNCI</span>' : '') + '</div>' +
             (opsiB64 ? '<img src="' + opsiB64 + '" class="pv-opsi-img">' : '') +
           '</div>' +
         '</div>';
